@@ -14,7 +14,4 @@ services:
         value: /app/data
       - key: SERVE_FRONTEND
         value: true
-    disk:
-      name: collab-data
-      mountPath: /app/data
-      sizeGB: 1
+   
