@@ -54,6 +54,45 @@ print("Server ready")
       expect(result.error).toBeNull();
       expect(result.logs.some((log) => log.message === "Server ready")).toBe(true);
     });
+
+    // Test case from User Image 1: f-strings
+    it("evaluates Python f-strings correctly", () => {
+      const pyCode = `
+a = 10
+b = 6
+sum = a + b
+print(f"sum is :{sum}")
+      `;
+      const result = executePythonSimulated(pyCode);
+      expect(result.error).toBeNull();
+      expect(result.logs.some((log) => log.message === "sum is :16")).toBe(true);
+    });
+
+    // Test case from User Image 2: sum() built-in
+    it("evaluates Python sum(numbers) correctly", () => {
+      const pyCode = `
+numbers = [10, 20, 30, 40, 50]
+result = sum(numbers)
+print(result)
+      `;
+      const result = executePythonSimulated(pyCode);
+      expect(result.error).toBeNull();
+      expect(result.logs.some((log) => log.message === "150")).toBe(true);
+    });
+
+    // Test case from User Image 3: for loop summation
+    it("evaluates Python for loop summation correctly", () => {
+      const pyCode = `
+numbers = [10, 20, 30, 40, 50]
+total = 0
+for n in numbers:
+    total += n
+print(total)
+      `;
+      const result = executePythonSimulated(pyCode);
+      expect(result.error).toBeNull();
+      expect(result.logs.some((log) => log.message === "150")).toBe(true);
+    });
   });
 
   describe("executeCppSimulated", () => {

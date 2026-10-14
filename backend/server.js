@@ -16,6 +16,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const { spawn } = require("child_process");
+
 app.get("/status", (req, res) => {
   res.json({
     message: "Collaborative Editor Backend Running 🚀",
@@ -23,6 +25,54 @@ app.get("/status", (req, res) => {
     persistenceDir,
     serveFrontend: Boolean(process.env.SERVE_FRONTEND),
   });
+});
+
+app.post("/run", (req, res) => {
+  const { code, language } = req.body;
+  if (!code) {
+    return res.status(400).json({ error: "No code provided" });
+  }
+
+  const startTime = Date.now();
+
+  if (language === "python") {
+    // Try executing with native Python
+    const pythonProc = spawn("python", ["-u", "-c", code], {
+      timeout: 8000,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    pythonProc.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    pythonProc.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    pythonProc.on("close", (exitCode) => {
+      const executionTimeMs = Date.now() - startTime;
+      res.json({
+        stdout,
+        stderr,
+        exitCode: exitCode ?? 0,
+        executionTimeMs,
+      });
+    });
+
+    pythonProc.on("error", (err) => {
+      res.status(500).json({
+        error: `Python execution error: ${err.message}`,
+        executionTimeMs: Date.now() - startTime,
+      });
+    });
+    return;
+  }
+
+  res.status(400).json({ error: `Language ${language} not supported for remote run` });
 });
 
 const distPath = path.join(__dirname, "../dist");
