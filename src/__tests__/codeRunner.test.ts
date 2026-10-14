@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { executeJavaScript, executePythonSimulated, executeCode } from "../utils/codeRunner";
+import {
+  executeJavaScript,
+  executePythonSimulated,
+  executeCppSimulated,
+  validateCss,
+  executeCode,
+} from "../utils/codeRunner";
 
 describe("CodeRunner", () => {
   describe("executeJavaScript", () => {
@@ -50,7 +56,57 @@ print("Server ready")
     });
   });
 
-  describe("executeCode with JSON", () => {
+  describe("executeCppSimulated", () => {
+    it("executes basic C++ cout and main return code", () => {
+      const cppCode = `
+#include <iostream>
+using namespace std;
+
+int main() {
+    int a = 10;
+    int b = 20;
+    cout << "Sum: " << a + b << endl;
+    return 0;
+}
+      `;
+      const result = executeCppSimulated(cppCode);
+      expect(result.error).toBeNull();
+      expect(result.logs.some((log) => log.message.includes("Sum: 30"))).toBe(true);
+      expect(result.returnValue).toBe("Process finished with exit code 0");
+    });
+
+    it("catches mismatched braces in C++", () => {
+      const invalidCpp = `
+int main() {
+    cout << "Unclosed" << endl;
+      `;
+      const result = executeCppSimulated(invalidCpp);
+      expect(result.error).toBeTruthy();
+      expect(result.error).toContain("Unclosed brace");
+    });
+  });
+
+  describe("validateCss", () => {
+    it("validates well-formed CSS rules and reports count", () => {
+      const css = `
+        .card { background: white; padding: 16px; }
+        button { color: blue; }
+      `;
+      const result = validateCss(css);
+      expect(result.error).toBeNull();
+      expect(result.returnValue).toContain("Valid");
+      expect(result.logs.some((l) => l.message.includes("2 style block(s)"))).toBe(true);
+    });
+
+    it("catches unclosed brackets in CSS", () => {
+      const badCss = `.card { background: white;`;
+      const result = validateCss(badCss);
+      expect(result.error).toBeTruthy();
+      expect(result.error).toContain("Missing closing brace");
+    });
+  });
+
+  describe("executeCode with JSON and C++", () => {
     it("validates valid JSON string", async () => {
       const validJson = '{"name": "Collab", "active": true}';
       const result = await executeCode(validJson, "json");
@@ -63,6 +119,18 @@ print("Server ready")
       const result = await executeCode(invalidJson, "json");
       expect(result.error).toBeTruthy();
       expect(result.error).toContain("JSON Syntax Error");
+    });
+
+    it("runs C++ through executeCode dispatcher", async () => {
+      const cppCode = `
+int main() {
+    cout << "Hello C++" << endl;
+    return 0;
+}
+      `;
+      const result = await executeCode(cppCode, "cpp");
+      expect(result.error).toBeNull();
+      expect(result.logs[0].message).toBe("Hello C++");
     });
   });
 });

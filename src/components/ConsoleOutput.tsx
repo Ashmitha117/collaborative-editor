@@ -7,6 +7,82 @@ type ConsoleOutputProps = {
   theme: "dark" | "light" | "one-dark";
 };
 
+function getCssPreviewHtml(userCss: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      margin: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+    .preview-wrapper {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .btn, button {
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #0284c7;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 9999px;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 500;
+    }
+    input {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+    /* --- USER CUSTOM CSS INJECTED BELOW --- */
+    ${userCss}
+  </style>
+</head>
+<body>
+  <div class="preview-wrapper">
+    <div class="card">
+      <h2>CSS Live Preview Canvas</h2>
+      <p>This playground renders components styled with your custom CSS in real time.</p>
+      <div style="display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap;">
+        <button class="btn button">Sample Button</button>
+        <span class="badge tag">Badge / Tag</span>
+        <input type="text" placeholder="Styled input field" />
+      </div>
+    </div>
+    <div class="card container">
+      <h3>Interactive Container Box</h3>
+      <p>Select elements with tags (<code>h2</code>, <code>p</code>, <code>button</code>) or classes (<code>.card</code>, <code>.btn</code>, <code>.badge</code>).</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 export const ConsoleOutput = ({
   getCode,
   language,
@@ -18,8 +94,18 @@ export const ConsoleOutput = ({
   const [result, setResult] = useState<ExecutionResult | null>(null);
 
   const isLight = theme === "light";
-  const supportsExecution = ["javascript", "python", "json"].includes(language);
-  const supportsPreview = language === "html" || language === "markdown";
+  // All languages now support execution/analysis
+  const supportsExecution = [
+    "javascript",
+    "python",
+    "cpp",
+    "css",
+    "json",
+    "html",
+  ].includes(language);
+
+  // HTML, CSS, and Markdown support the Live Preview canvas
+  const supportsPreview = ["html", "css", "markdown"].includes(language);
 
   const handleRun = async () => {
     setIsOpen(true);
@@ -28,7 +114,7 @@ export const ConsoleOutput = ({
     try {
       const res = await executeCode(code, language);
       setResult(res);
-      if (supportsPreview) {
+      if (language === "html" || (language === "css" && activeTab === "preview")) {
         setActiveTab("preview");
       } else {
         setActiveTab("output");
@@ -164,7 +250,7 @@ export const ConsoleOutput = ({
             <div className="font-mono text-xs max-h-48 overflow-y-auto space-y-1">
               {!result && (
                 <div className="text-slate-400 italic">
-                  Press &quot;Run Code&quot; to execute your {language} script and view output here.
+                  Press &quot;Run Code&quot; to execute your {language.toUpperCase()} script and view output here.
                 </div>
               )}
 
@@ -193,7 +279,7 @@ export const ConsoleOutput = ({
               ))}
 
               {result?.returnValue !== undefined && (
-                <div className="mt-2 pt-2 border-t border-slate-800 text-purple-400">
+                <div className="mt-2 pt-2 border-t border-slate-800 text-purple-400 font-medium">
                   <span className="text-slate-500 font-semibold select-none">
                     Result:{" "}
                   </span>
@@ -215,6 +301,13 @@ export const ConsoleOutput = ({
                   title="HTML Live Preview"
                   sandbox="allow-scripts"
                   srcDoc={code}
+                  className="w-full h-full border-none"
+                />
+              ) : language === "css" ? (
+                <iframe
+                  title="CSS Live Preview"
+                  sandbox="allow-scripts"
+                  srcDoc={getCssPreviewHtml(code)}
                   className="w-full h-full border-none"
                 />
               ) : (
