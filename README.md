@@ -1,101 +1,150 @@
-﻿# Collaborative Editor
+# 🚀 Real-Time Collaborative Code Editor
 
-This project is a real-time collaborative code editor built with React, Vite, Yjs, and CodeMirror.
+A full-stack, real-time collaborative code editor and execution environment built with **React 19**, **TypeScript**, **Yjs (CRDTs)**, **CodeMirror 6**, and **WebSockets**.
 
-## Features
+Designed for seamless peer-to-peer developer collaboration with zero-conflict document merging, live presence indicators, in-room chat, multi-language syntax autocompletion, instant code execution, and persistent storage.
 
-- Real-time collaborative editing with Yjs and y-websocket
-- Room-based sharing using UUID links
-- Presence avatars and local user labels
-- JavaScript/Python syntax highlighting
-- Autocomplete suggestions for JavaScript and Python keywords
-- Recent room persistence in localStorage
+---
 
-## Run locally
+## ✨ Features
 
-### Backend
+- **⚡ Real-Time Collaborative Editing**:
+  - Powered by **Yjs Conflict-free Replicated Data Types (CRDTs)** and `y-websocket` for eventual consistency and sub-millisecond synchronization.
+  - Granular undo/redo tracking per user with `Y.UndoManager`.
+- **👥 Live Multiplayer Presence**:
+  - Dynamic user presence awareness showing connected peers, colored cursor flags, and active collaborator badges.
+- **💬 Real-Time In-Room Chat**:
+  - Room-based multiplayer chat persisted in the shared Yjs document state without requiring external chat APIs.
+- **🌐 7 Programming Languages**:
+  - Full syntax highlighting and custom autocompletion dictionaries for **JavaScript, Python, HTML, CSS, JSON, Markdown, and C++**.
+- **▶ Client-Side Code Execution & Live Preview**:
+  - **JavaScript**: In-browser execution sandbox capturing `console.log`, `warn`, `error`, return values, and execution timing.
+  - **HTML & Markdown**: Live interactive sandbox preview with hot-rendering.
+  - **Python & JSON**: Lightweight client-side evaluator and syntax validator.
+- **🎨 Multi-Theme Support**:
+  - High-contrast **Deep Space (Dark)**, **One Dark**, and **Clean Light** themes with unified editor and page styling.
+- **💾 Import & Export**:
+  - One-click file export with automatic extension formatting (`.js`, `.py`, `.html`, etc.).
+  - File upload/import with auto-detection of syntax and transactional document insertion.
+- **📦 Persistent Storage**:
+  - Backend document persistence backed by **LevelDB** (`y-leveldb`) to preserve room history across server restarts.
+- **⚡ Optimized Bundle Splitting**:
+  - Rollup vendor code-splitting (`codemirror-core`, `codemirror-langs`, `react-vendor`, `yjs-vendor`) ensuring fast load times and sub-500 kB chunks.
 
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, React Router 7 |
+| **Editor Core** | CodeMirror 6, `@codemirror/view`, `@codemirror/state`, `@codemirror/autocomplete`, `@codemirror/theme-one-dark` |
+| **Multiplayer / CRDT** | Yjs, `y-websocket`, `y-codemirror.next`, `y-leveldb` |
+| **Backend** | Node.js, Express, `ws` (WebSockets), LevelDB |
+| **Testing & Quality** | Vitest, Oxlint |
+| **DevOps & Container** | Docker (Multi-Stage Build), Docker Compose, Render Blueprint |
+
+---
+
+## 🏛 System Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                       Browser Clients                       │
+│  ┌───────────────────────┐       ┌───────────────────────┐  │
+│  │ User A (CodeMirror 6) │       │ User B (CodeMirror 6) │  │
+│  │ + Y.Doc Awareness     │       │ + Y.Doc Awareness     │  │
+│  │ + In-Room Chat        │       │ + In-Room Chat        │  │
+│  └───────────▲───────────┘       └───────────▲───────────┘  │
+└──────────────┼───────────────────────────────┼──────────────┘
+               │                               │
+               │   WebSocket Sync (y-websocket)│
+               ▼                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Node.js WebSocket Server                    │
+│                 (Express + y-websocket)                     │
+│                                                             │
+│         ┌───────────────────────────────────────┐           │
+│         │        Yjs Document Controller        │           │
+│         └───────────────────┬───────────────────┘           │
+└─────────────────────────────┼───────────────────────────────┘
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │  LevelDB Storage Engine │
+                 │      (backend/data)     │
+                 └─────────────────────────┘
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js**: `v20.x` or `v24.x`
+- **npm**: `v10+` or `v12+`
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/<your-username>/collaborative-editor.git
+cd collaborative-editor
+```
+
+### 2. Start Backend Server
 ```bash
 cd backend
 npm install
 npm run dev
 ```
+The backend WebSocket and API server starts on `http://localhost:1234`.
 
-The backend supports Yjs persistence using `y-leveldb`. By default it stores document history in `backend/data`.
-
-To explicitly set a persistence directory:
-
-```bash
-YPERSISTENCE=./backend/data npm run dev
-```
-
-To start without persistence, unset `YPERSISTENCE` before running the server.
-
-#### Production deployment with built frontend
-
-After building the frontend, the backend can also serve the production app from `../dist`.
-
-```bash
-npm install
-npm run build
-cd backend
-SERVE_FRONTEND=true YPERSISTENCE=./backend/data PORT=1234 npm start
-```
-
-If your app is deployed separately, keep `VITE_WS_URL` set to the backend WebSocket URL.
-
-### Frontend
-
+### 3. Start Frontend Client
+In a new terminal window at the project root:
 ```bash
 npm install
 npm run dev
 ```
+Visit **`http://localhost:5173`** to use the application.
 
-Then open the Vite URL shown in the terminal.
+---
 
-## Deployment
+## 🧪 Testing & Code Quality
 
-### Backend
-
-Deploy the backend folder to a Node.js host or container.
-Set `PORT` if needed (default: `1234`). Example:
-
+Run unit tests via **Vitest**:
 ```bash
-PORT=1234 node server.js
+npm test
 ```
 
-If you host the backend behind a reverse proxy, ensure WebSocket upgrade support is enabled.
+Run linter via **Oxlint**:
+```bash
+npm run lint
+```
 
-### Frontend
-
-Build the frontend and deploy the `dist/` output to your static host.
-
+Build production assets:
 ```bash
 npm run build
 ```
 
-If the backend is hosted at a different URL, set the frontend env variable:
+---
 
-```env
-VITE_WS_URL=wss://your-backend-host.example.com
-```
+## 🐳 Docker Deployment
 
-Then restart the frontend dev server or rebuild.
+The repository includes a production-ready, multi-stage [`docker/Dockerfile`](docker/Dockerfile) and [`docker-compose.yml`](docker-compose.yml).
 
-For production backend deployment, make sure `YPERSISTENCE` points to a writable folder so document history can survive restarts.
-
-### Docker deployment
-
-Build and run the container from the repo root:
-
+### Run with Docker Compose
 ```bash
-docker build -f docker/Dockerfile -t collab-editor .
-docker run -p 1234:1234 collab-editor
+docker compose up -d
 ```
+The unified full-stack application will be live at `http://localhost:1234` with persistent LevelDB storage at named volume `collab-data`.
 
-The container starts the backend with frontend serving enabled and persistence active at `./data`.
+---
 
-## Notes
+## 🌐 Cloud Deployment
 
-- By default, the editor will connect to the same origin with the correct `ws://` or `wss://` scheme.
-- Use `VITE_WS_URL` for remote or production backends.
+Detailed step-by-step instructions for deploying to **Render**, **Railway**, **Fly.io**, and **Vercel** are available in [**`DEPLOYMENT.md`**](DEPLOYMENT.md).
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
