@@ -1,0 +1,19 @@
+services:
+  collaborative-editor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: collaborative-editor
+    ports:
+      - "1234:1234"
+    environment:
+      - PORT=1234
+      - HOST=0.0.0.0
+      - YPERSISTENCE=/app/data
+      - SERVE_FRONTEND=true
+    volumes:
+      - collab-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  collab-data:

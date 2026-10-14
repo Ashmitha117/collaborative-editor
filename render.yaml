@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: collaborative-editor
+    env: docker
+    dockerfilePath: docker/Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 1234
+      - key: HOST
+        value: 0.0.0.0
+      - key: YPERSISTENCE
+        value: /app/data
+      - key: SERVE_FRONTEND
+        value: true
+    disk:
+      name: collab-data
+      mountPath: /app/data
+      sizeGB: 1
